@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -23,15 +24,19 @@ export class MailService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {
     this.apiInstance = new TransactionalEmailsApi();
-
     this.apiInstance.setApiKey(
       TransactionalEmailsApiApiKeys.apiKey,
       this.configService.get<string>('EMAIL_KEY'),
     );
   }
 
-  async sendOtpVerification(email: string) {
+  async sendOtpVerification(email: string, isUser: boolean) {
     if (!email) throw new ForbiddenException('Email is required');
+
+    if (isUser) {
+      const existuser = await this.userModel.findOne({ email });
+      if (!existuser) throw new UnauthorizedException('User is not found');
+    }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
     const salt = await genSalt(10);
@@ -50,16 +55,17 @@ export class MailService {
     await this.otpModel.create({
       email,
       otp: hashedOtp,
-      expiredAt: Date.now() + 3600000,
+      expireAt: Date.now() + 3600000,
     });
     await this.apiInstance.sendTransacEmail(emailData);
     return 'Success';
   }
+
   async verifyOtp(email: string, otpVerification: string) {
     if (!otpVerification)
       throw new BadRequestException('Please send otp verification code');
     const userExistOtp = await this.otpModel.find({ email });
-
+    console.log(userExistOtp);
     const { expireAt, otp } = userExistOtp.slice(-1)[0];
 
     if (expireAt < new Date()) {
