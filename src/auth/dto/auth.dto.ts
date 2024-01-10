@@ -7,9 +7,8 @@ export class AuthDto {
   @IsEmail()
   email: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(6)
+  // @IsString()
+  // @MinLength(6)
   password: string;
 
   fullname?: string;

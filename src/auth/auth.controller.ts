@@ -35,4 +35,10 @@ export class AuthController {
   async getNewToken(@Body() token: TokenDto) {
     return this.authService.getNewToken(token);
   }
+
+  @HttpCode(200)
+  @Post('check-user')
+  async checkUser(@Body() dto: { email: string }) {
+    return this.authService.checkUser(dto.email);
+  }
 }

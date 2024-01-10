@@ -25,7 +25,10 @@ export class AuthService {
     const salt = await genSalt(10);
     const passwordHash = await hash(body.password, salt);
 
-    const newUser = new this.userModel({ ...body, password: passwordHash });
+    const newUser = new this.userModel({
+      ...body,
+      password: body.password.length ? passwordHash : '',
+    });
 
     const token = await this.issueTokenPair(String(newUser._id));
     return { user: this.getUserField(await newUser.save()), ...token };
@@ -34,9 +37,12 @@ export class AuthService {
   async login(body: LoginDto) {
     const existUser = await this.isExistUser(body.email);
     if (!existUser) throw new BadRequestException('User not found');
-    const currentPassword = await compare(body.password, existUser.password);
-    if (!currentPassword)
-      throw new BadRequestException('password is incorrect');
+
+    if (body.password.length) {
+      const currentPassword = await compare(body.password, existUser.password);
+      if (!currentPassword)
+        throw new BadRequestException('password is incorrect');
+    }
 
     const token = await this.issueTokenPair(String(existUser._id));
 
@@ -53,6 +59,15 @@ export class AuthService {
 
     const token = await this.issueTokenPair(String(user._id));
     return { user: this.getUserField(user), ...token };
+  }
+
+  async checkUser(email: string) {
+    const user = await this.isExistUser(email);
+    if (user) {
+      return 'user';
+    } else {
+      return 'no-user';
+    }
   }
 
   async isExistUser(email: string): Promise<UserDocument> {

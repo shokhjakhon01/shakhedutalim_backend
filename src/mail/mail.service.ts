@@ -65,7 +65,6 @@ export class MailService {
     if (!otpVerification)
       throw new BadRequestException('Please send otp verification code');
     const userExistOtp = await this.otpModel.find({ email });
-    console.log(userExistOtp);
     const { expireAt, otp } = userExistOtp.slice(-1)[0];
 
     if (expireAt < new Date()) {
