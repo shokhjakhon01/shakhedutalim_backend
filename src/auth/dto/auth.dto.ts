@@ -12,6 +12,8 @@ export class AuthDto {
   password: string;
 
   fullname?: string;
+
+  avatar?: string;
 }
 
 export class LoginDto extends PartialType(AuthDto) {}
